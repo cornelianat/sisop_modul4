@@ -28,7 +28,7 @@ static int xmp_getattr(const char *path, struct stat *stbuf)
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		       off_t offset, struct fuse_file_info *fi)
 {
-  char fpath[1000];
+  	char fpath[1000];
 	if(strcmp(path,"/") == 0)
 	{
 		path=dirpath;
@@ -84,14 +84,15 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 			}
 		}
 	}
-	if(strcmp(ext,".pdf")==0||strcmp(ext,".doc")==0||strcmp(ext,".txt")==0){
-		char* newName;
-		newName = strcat(fpath,".ditandai");
+	if(strcmp(ext,".doc")==0||strcmp(ext,".pdf")==0||strcmp(ext,".txt")==0){		
+		char old[1000],newName[1000];
 		char err[1000];
-		rename(fpath,newName);
-		sprintf(err,"chmod 000 %s",newName);
+		sprintf(old,"%s",fpath);
+		sprintf(newName,"%s.ditandai",fpath);
+		rename(old,newName);
+		sprintf(err,"chmod 000 %s.ditandai",fpath);
 		system(err);
-		system("zenity --error --text=\"Terjadi Kesalahan! File berisi konten berbahaya.\n\" --title=\"Warning!\"");
+		system("zenity --error --text=\"Terjadi Kesalahan! File berisi konten berbahaya.\n\"");		
 		return -errno;
 	}
 	else{
