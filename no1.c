@@ -1,29 +1,21 @@
 #define FUSE_USE_VERSION 28
-#include <fuse.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <errno.h>
-#include <sys/time.h>
+#include<fuse.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<unistd.h>
+#include<fcntl.h>
+#include<dirent.h>
+#include<errno.h>
+#include<sys/time.h>
 
 static const char *dirpath = "/home/tasha/Documents";
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
-	int res;
+  	int res;
 	char fpath[1000];
-	char newFile[1000];
-	if (strcmp(path, "/") != 0) {
-		memcpy(newFile, path, strlen(path) - 9);
-		newFile[strlen(path) - 9] = '\0';
-	} else {
-		memcpy(newFile, path, strlen(path));
-	}
-
-	sprintf(fpath,"%s%s",dirpath,newFile);
-	printf("full path: %s\n", fpath);
+	sprintf(fpath,"%s%s",dirpath,path);
 	res = lstat(fpath, stbuf);
 
 	if (res == -1)
@@ -32,11 +24,11 @@ static int xmp_getattr(const char *path, struct stat *stbuf)
 	return 0;
 }
 
+
 static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 		       off_t offset, struct fuse_file_info *fi)
 {
-	printf("xmp_readdir: %s\n", path);
-	char fpath[1000];
+  	char fpath[1000];
 	if(strcmp(path,"/") == 0)
 	{
 		path=dirpath;
@@ -57,13 +49,10 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 
 	while ((de = readdir(dp)) != NULL) {
 		struct stat st;
-		char* newName;
-		newName = strcat(de->d_name, ".ditandai");
 		memset(&st, 0, sizeof(st));
 		st.st_ino = de->d_ino;
 		st.st_mode = de->d_type << 12;
-		printf("de->d_name: %s\n", de->d_name);
-		res = (filler(buf, newName, &st, 0));
+		res = (filler(buf, de->d_name, &st, 0));
 			if(res!=0) break;
 	}
 
@@ -74,34 +63,47 @@ static int xmp_readdir(const char *path, void *buf, fuse_fill_dir_t filler,
 static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 		    struct fuse_file_info *fi)
 {
-	printf("xmp_read: %s", path);
-	char fpath[1000];
-	char newFile[1000];
+ 	char fpath[1000];
 	if(strcmp(path,"/") == 0)
 	{
-		memcpy(newFile, path, strlen(path));
-		//path=dirpath;
+		path=dirpath;
 		sprintf(fpath,"%s",path);
 	}
-	else {
-		memcpy(newFile, path, strlen(path) - 9);
-		newFile[strlen(path)-9] = '\0';
-		sprintf(fpath, "%s%s",dirpath,newFile);
-	}
+	else sprintf(fpath, "%s%s",dirpath,path);
 	int res = 0;
-	int fd = 0 ;
-
-	(void) fi;
-	fd = open(fpath, O_RDONLY);
-	if (fd == -1)
+  	int fd = 0 ;
+	char ext[100];
+	int len=strlen(fpath);
+	int i,j,k;
+	for(i=0;i<len;i++){
+		if(fpath[i]=='.'){
+			k=0;
+			for(j=i;j<len;j++){
+				ext[k]=fpath[j];
+				k++;
+			}
+		}
+	}
+	if(strcmp(ext,".doc")==0||strcmp(ext,".pdf")==0||strcmp(ext,".txt")==0){		
+		char old[1000],newName[1000];
+		char err[1000];
+		sprintf(old,"%s",fpath);
+		sprintf(newName,"%s.ditandai",fpath);
+		rename(old,newName);
+		sprintf(err,"chmod 000 %s.ditandai",fpath);
+		system(err);
+		system("zenity --error --text=\"Terjadi Kesalahan! File berisi konten berbahaya.\n\"");		
 		return -errno;
-
-	res = pread(fd, buf, size, offset);
-	if (res == -1)
-		res = -errno;
-
-	close(fd);
-	return res;
+	}
+	else{
+		(void) fi;
+		fd = open(fpath, O_RDONLY);
+		if (fd == -1) return -errno;
+		res = pread(fd, buf, size, offset);
+		if (res == -1) res = -errno;
+		close(fd);
+		return res;
+	}
 }
 
 static struct fuse_operations xmp_oper = {
