@@ -9,7 +9,11 @@
 #include<errno.h>
 #include<sys/time.h>
 
+<<<<<<< HEAD
 static const char *dirpath = "/home/tasha/Documents";
+=======
+static const char *dirpath = "/home/nuzha/Documents";
+>>>>>>> ba48c3ba13d43b6e10de154a913a73e24f6c0032
 
 static int xmp_getattr(const char *path, struct stat *stbuf)
 {
@@ -117,3 +121,4 @@ int main(int argc, char *argv[])
 	umask(0);
 	return fuse_main(argc, argv, &xmp_oper, NULL);
 }
+
