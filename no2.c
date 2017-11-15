@@ -99,7 +99,7 @@ static int xmp_read(const char *path, char *buf, size_t size, off_t offset,
 			mkdir("/home/tasha/modulmpat/rahasia",0777);
 		    }
 		char msg[1000];
-		
+		sprintf(msg,"mv /home/tasha/Documents/*.ditandai /home/tasha/modulmpat/rahasia");
 		system(msg);
 			
 		return -errno;
